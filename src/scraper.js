@@ -7,25 +7,49 @@ const getRecapsPage = async () => {
   const resp = await axios.get('https://thejeopardyfan.com/category/recaps')
   return resp.data
 }
+const nonPrintable = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,
+    14,15,16,17,19,19,"1A","1B","1C","1d","1E","1F"
+  ].map(code => new RegExp(`U+000${code}`, 'g'))
+
+const escape = (unsafe)=> {
+    // return nonPrintable
+    //      .reduce(
+    //        (string, regex) => string.replace(regex, ''), 
+    //        unsafe
+    //       )
+        return unsafe 
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;")
+         .replace(/’/g, "'")
+         .replace(/–/g,"-")
+         .replace(/…/g, '...')
+         .replace(/[^\x20-\x7E]/g, '');
+
+ }
 
 const scrape = (html) => {
   const $ = cheerio.load(html)
   const articles = []
   $('article').each(function() {
     const article = $(this)
+
     articles.push({
       author: 'Andy Saunders',
       image: article.find('img').first().attr('src'),
       url: article.find('a').first().attr('href'),
-      title: article.find('h3').text().replace(/’/g, "'").replace(/–/g,"-"),
-      summary: (
+      title: escape(article.find('h3').text()),
+      summary: escape(
         article.find('.content-lead-excerpt p').text() || 
         article.find('.content-list-excerpt p').text()
-       ).replace(/’/g, "'").replace(/–/g,"-"),
+       ),
+      //  updated:new Date().toISOString()
       updated: DateTime.fromFormat(
-        article.find('.entry-meta-date').text()
-       , "MMMM d, yyyy"
-       ).toISO(),
+          article.find('.entry-meta-date').text()
+        , "MMMM d, yyyy"
+        ).toISO()
     })
   })
   return articles
@@ -45,7 +69,7 @@ const toXML = (entries) => {
       rel:"alternate",
       type:"text/html",
     }, {
-      href: "http://the-jeopardy-fan.s3-us-east-2.amazonaws.com/feed.atom",
+      href: "https://the-jeopardy-fan.s3.us-east-2.amazonaws.com/feed.atom",
       rel: "self",
     }]
   }
@@ -68,15 +92,11 @@ const toXML = (entries) => {
     <author>
       <name>{{author}}</name>
     </author>
-    <link href="{{url}}" rel="self"/>
-    <content type="xhtml">
-      <div xmlns="http://www.w3.org/1999/xhtml">
-        <img src="https://thejeopardyfan.com/wp-content/uploads/2016/09/GameRecap-400x226.png" width="400" height="226" />
-        <p>{{summary}}</p>
-      </div>
-    </content>
+    <link href="{{url}}"/>
+    <summary>
+      {{summary}}
+    </summary>
     <updated>{{updated}}</updated>
-    <media:content url="https://thejeopardyfan.com/wp-content/uploads/2016/09/GameRecap-400x226.png" medium="image" width="400" height="226"/>
     <id>{{url}}</id>
   </entry>
   {{/entries}}
