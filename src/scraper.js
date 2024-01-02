@@ -3,56 +3,67 @@ const cheerio = require('cheerio')
 const axios = require('axios')
 const { DateTime } = require("luxon");
 
-const getRecapsPage = async () => {
-  const resp = await axios.get('https://thejeopardyfan.com/category/recaps')
+const recaps = 'https://thejeopardyfan.com/category/recaps'
+
+const getHTML = async (url) => {
+  const resp = await axios.get(url)
   return resp.data
 }
-const nonPrintable = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,
-    14,15,16,17,19,19,"1A","1B","1C","1d","1E","1F"
-  ].map(code => new RegExp(`U+000${code}`, 'g'))
+
+const getRecapsPage = async () => {
+  return getHTML(recaps)
+}
 
 const escape = (unsafe)=> {
-    // return nonPrintable
-    //      .reduce(
-    //        (string, regex) => string.replace(regex, ''), 
-    //        unsafe
-    //       )
-        return unsafe 
-         .replace(/&/g, "&amp;")
-         .replace(/</g, "&lt;")
-         .replace(/>/g, "&gt;")
-         .replace(/"/g, "&quot;")
-         .replace(/'/g, "&#039;")
-         .replace(/’/g, "'")
-         .replace(/–/g,"-")
-         .replace(/…/g, '...')
-         .replace(/[^\x20-\x7E]/g, '');
-
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
+    .replace(/’/g, "'")
+    .replace(/–/g,"-")
+    .replace(/—/g,' -- ')
+    .replace(/…/g, '...')
+  .replace(/[^\x20-\x7E]/g, '');
  }
 
-const scrape = (html) => {
+const scrapeList = (html) => {
   const $ = cheerio.load(html)
   const articles = []
-  $('article').each(function() {
+  $('article').filter((_index, el) => {
+    return el.attribs.class.includes('category-season')
+  }).each(function() {
     const article = $(this)
-
     articles.push({
       author: 'Andy Saunders',
       image: article.find('img').first().attr('src'),
       url: article.find('a').first().attr('href'),
       title: escape(article.find('h3').text()),
       summary: escape(
-        article.find('.content-lead-excerpt p').text() || 
+        article.find('.content-lead-excerpt p').text() ||
         article.find('.content-list-excerpt p').text()
        ),
       //  updated:new Date().toISOString()
       updated: DateTime.fromFormat(
-          article.find('.entry-meta-date').text()
-        , "MMMM d, yyyy"
+          escape(article.find('.content-grid-title').text()).replace("Today's Final Jeopardy - ", '')
+        , 'DDDD'
         ).toISO()
     })
   })
   return articles
+}
+
+const scrapeQuestion = (articles = []) => {
+  return Promise.all(articles.map(async (article) => {
+    const html = await getHTML(article.url)
+    const $ = cheerio.load(html)
+    let question = $('.entry-content h2').first().text()
+    return {
+      ...article,
+      summary: `${escape(question)}.`
+    }
+  }))
 }
 
 const toXML = (entries) => {
@@ -106,8 +117,10 @@ const toXML = (entries) => {
 
 const render = async () => {
   const page = await getRecapsPage()
-  const scraped = scrape(page) 
-  return toXML(scraped)
+  const articles = scrapeList(page)
+  console.log(articles)
+  const articlesWithQuestion = await scrapeQuestion(articles)
+  return toXML(articlesWithQuestion)
 }
 
 module.exports = render
