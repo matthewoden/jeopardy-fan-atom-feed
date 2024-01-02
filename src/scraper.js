@@ -32,7 +32,7 @@ const scrapeList = (html) => {
   const $ = cheerio.load(html)
   const articles = []
   $('article').filter((_index, el) => {
-    return el.attribs.class.includes('category-season')
+    return !el.attribs.class.includes('category-jeopardy-uk')
   }).each(function() {
     const article = $(this)
     articles.push({
@@ -118,8 +118,8 @@ const toXML = (entries) => {
 const render = async () => {
   const page = await getRecapsPage()
   const articles = scrapeList(page)
-  console.log(articles)
   const articlesWithQuestion = await scrapeQuestion(articles)
+  console.log(articlesWithQuestion)
   return toXML(articlesWithQuestion)
 }
 
