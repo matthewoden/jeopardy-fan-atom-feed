@@ -33,7 +33,7 @@ const scrapeList = (html) => {
   const articles = []
   $('article').filter((_index, el) => {
     return !el.attribs.class.includes('category-jeopardy-uk')
-  }).each(function() {
+  }).each(function(index) {
     const article = $(this)
     articles.push({
       author: 'Andy Saunders',
@@ -46,9 +46,9 @@ const scrapeList = (html) => {
        ),
       //  updated:new Date().toISOString()
       updated: DateTime.fromFormat(
-          escape(article.find('.content-grid-title').text()).replace("Today's Final Jeopardy - ", '')
+          escape(article.find('h3').text()).split(" - ")[1]
         , 'DDDD'
-        ).toISO()
+        ).set({hour: index }).toISO()
     })
   })
   return articles
@@ -58,10 +58,10 @@ const scrapeQuestion = (articles = []) => {
   return Promise.all(articles.map(async (article) => {
     const html = await getHTML(article.url)
     const $ = cheerio.load(html)
-    let question = $('.entry-content h2').first().text()
+    let question = $('.entry-content h2 span[style="color: red;"]').first().text()
     return {
       ...article,
-      summary: `${escape(question)}.`
+      summary: question ? `${escape(question)}.` : article.summary
     }
   }))
 }
