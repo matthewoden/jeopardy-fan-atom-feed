@@ -1,22 +1,24 @@
 {
-  "name": "jeopardy",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node ./src/handler.js"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "aws-sdk": "^2.999.0",
-    "axios": "^0.22.0",
-    "cheerio": "^1.0.0-rc.10",
-    "dotenv": "^10.0.0",
-    "mustache": "^4.2.0",
-    "luxon": "^2.0.2"
-  },
-  "devDependencies": {
-   }
+    "name": "jeopardy",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "node ./src/handler.js",
+        "deploy": "serverless deploy"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "aws-sdk": "^2.999.0",
+        "axios": "^0.22.0",
+        "cheerio": "^1.0.0-rc.10",
+        "dotenv": "^10.0.0",
+        "luxon": "^2.0.2",
+        "mustache": "^4.2.0"
+    },
+    "devDependencies": {
+        "serverless": "^3.38.0"
+    }
 }

@@ -3,23 +3,23 @@ service: jeopardy-feed
 frameworkVersion: "3"
 
 provider:
-  name: aws
-  runtime: nodejs14.x
-  lambdaHashingVersion: 20201221
+    name: aws
+    runtime: nodejs14.x
+    lambdaHashingVersion: 20201221
 
-  iamRoleStatements:
-    - Effect: "Allow"
-      Action:
-        - "s3:PutObject"
-        - "s3:PutObjectAcl"
-      Resource: "arn:aws:s3:::the-jeopardy-fan/*"
+    iamRoleStatements:
+        - Effect: "Allow"
+          Action:
+              - "s3:PutObject"
+              - "s3:PutObjectAcl"
+          Resource: "arn:aws:s3:::the-jeopardy-fan/*"
 
 package:
-  exclude:
-    - .env
+    exclude:
+        - .env
 
 functions:
-  scrape:
-    handler: src/handler.scrape
-    events:
-      - schedule: rate(1 hour)
+    scrape:
+        handler: src/handler.scrape
+        events:
+            - schedule: rate(1 hour)
